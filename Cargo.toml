@@ -1,0 +1,6 @@
+[workspace]
+resolver = "2"
+members = [
+	"inline-sql",
+	"inline-sql-macros",
+]

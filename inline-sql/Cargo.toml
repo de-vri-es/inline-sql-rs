@@ -1,0 +1,8 @@
+[package]
+name = "inline-sql"
+version = "0.0.0"
+
+edition = "2021"
+
+[dependencies]
+inline-sql-macros = { path = "../inline-sql-macros", version = "=0.0.0" }
