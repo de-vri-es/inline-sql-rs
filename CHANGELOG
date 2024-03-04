@@ -1,2 +1,2 @@
-# Unreleased
+# Version 0.1.0 - 2024-03-04
 - [add][major] Initial with support for `tokio_postgres` only.
