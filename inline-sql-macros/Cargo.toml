@@ -6,6 +6,7 @@ license = "BSD-2-Clause"
 repository = "https://github.com/de-vri-es/inline-sql-rs"
 
 edition = "2021"
+publish = ["crates-io"]
 
 [lib]
 proc-macro = true
