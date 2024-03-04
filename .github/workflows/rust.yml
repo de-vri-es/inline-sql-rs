@@ -1,0 +1,36 @@
+name: CI
+on:
+  push: { branches: "main" }
+  pull_request: { branches: "*" }
+
+jobs:
+  build_and_test:
+    name:  ${{ matrix.os }}, rust-${{ matrix.rust }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        rust: [stable]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Restore cached crates.io index
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-rust-${{ matrix.rust }}
+          save-always: true
+      - name: Checkout code
+        uses: actions/checkout@master
+      - name: Install Rust ${{ matrix.rust }}
+        run: |
+          rustup install ${{ matrix.rust }} --profile minimal
+          rustup default ${{ matrix.rust }}
+      - name: Build
+        run: cargo build --workspace --release --all-features --color=always
+      - name: Test
+        run: cargo test --workspace --release --all-features --color=always
+      - name: Clippy
+        run: cargo clippy --workspace --release --all-features --color=always
