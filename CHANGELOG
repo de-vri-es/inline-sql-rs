@@ -1,4 +1,4 @@
-# Unreleased
+# Version 0.1.2 - 2024-03-05
 - [fix][minor] Pin macro version to exact same version as main crate.
 
 # Version 0.1.1 - 2024-03-05
