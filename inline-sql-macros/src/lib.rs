@@ -101,6 +101,12 @@ fn inline_sql_function(errors: &mut Vec<syn::Error>, function: SqlFunction) -> T
 			let params: &[&(dyn ::tokio_postgres::types::ToSql + ::core::marker::Sync)] = #placeholders;
 			let result = client.execute(#query, params)#await_future;
 			let result = #handle_err;
+			Ok(())
+		},
+		QueryType::CountRows => quote! {
+			let params: &[&(dyn ::tokio_postgres::types::ToSql + ::core::marker::Sync)] = #placeholders;
+			let result = client.execute(#query, params)#await_future;
+			let result = #handle_err;
 			Ok(result)
 		},
 		QueryType::List(elem_type) => {
@@ -261,6 +267,7 @@ fn parse_delimiter(input: syn::parse::ParseStream) -> Result<(syn::MacroDelimite
 
 enum QueryType<'a> {
 	Execute,
+	CountRows,
 	List(&'a syn::Type),
 	Optional(&'a syn::Type),
 	One(&'a syn::Type),
@@ -276,8 +283,10 @@ impl<'a> QueryType<'a> {
 			Ok(Self::Optional(inner))
 		} else if type_is_row_stream(typ) {
 			Ok(Self::Stream)
-		} else if type_is_u64(typ) {
+		} else if type_is_unit(typ) {
 			Ok(Self::Execute)
+		} else if type_is_u64(typ) {
+			Ok(Self::CountRows)
 		} else {
 			Err(syn::Error::new_spanned(typ, concat!(
 				"#[inline_sql]: Expected `()`, `u64`, `Vec<_>`, `Option<_>`, `RowStream` or `RowIter`\n\n",
@@ -452,6 +461,14 @@ fn type_is_row_stream(typ: &syn::Type) -> bool {
 
 	if let Some(path) = type_as_path(typ) {
 		path_is_one_of(path, candidates)
+	} else {
+		false
+	}
+}
+
+fn type_is_unit(typ: &syn::Type) -> bool {
+	if let syn::Type::Tuple(tuple) = type_strip_paren(typ) {
+		tuple.elems.is_empty()
 	} else {
 		false
 	}
