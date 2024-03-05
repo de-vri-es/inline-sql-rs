@@ -1,2 +1,5 @@
+# Unreleased
+- [add][minor] Allow query function to return `Result<(), E>`.
+
 # Version 0.1.0 - 2024-03-04
 - [add][major] Initial with support for `tokio_postgres` only.

@@ -1,37 +1,7 @@
 use inline_sql::inline_sql;
 use clap::CommandFactory;
-
-#[derive(clap::Parser)]
-struct Options {
-	#[clap(long, short)]
-	#[clap(global = true)]
-	url: Option<String>,
-
-	#[clap(subcommand)]
-	command: Command,
-}
-
-#[derive(clap::Subcommand)]
-enum Command {
-	CreateTable,
-	GetPets,
-	GetPet(GetPet),
-	AddPet(AddPet),
-}
-
-#[derive(clap::Args)]
-struct GetPet {
-	name: String,
-}
-
-#[derive(clap::Args)]
-struct AddPet {
-	name: String,
-	species: String,
-}
-
 #[inline_sql]
-async fn create_table(client: &tokio_postgres::Client) -> Result<u64, tokio_postgres::Error> {
+async fn create_table(client: &tokio_postgres::Client) -> Result<(), tokio_postgres::Error> {
 	query!(CREATE TABLE pets (
 		name TEXT PRIMARY KEY,
 		species TEXT NOT NULL
@@ -59,6 +29,30 @@ struct Pet {
 	name: String,
 	species: String,
 }
+
+#[derive(clap::Parser)]
+struct Options {
+	#[clap(long, short)]
+	#[clap(global = true)]
+	url: Option<String>,
+
+	#[clap(subcommand)]
+	command: Command,
+}
+
+#[derive(clap::Subcommand)]
+enum Command {
+	CreateTable,
+	GetPets,
+	GetPet {
+		name: String,
+	},
+	AddPet {
+		name: String,
+		species: String,
+	},
+}
+
 
 #[tokio::main]
 async fn main() {
@@ -98,19 +92,22 @@ async fn do_main(options: Options) -> Result<(), ()> {
 				let pets = get_pets(&client)
 					.await
 					.map_err(|e| eprintln!("Failed to get pets: {e}"))?;
-				println!("{:#?}", pets);
+				for pet in &pets {
+					println!("Name: {}, species: {}", pet.name, pet.species);
+				}
+				println!("Total: {}", pets.len());
 				Ok(())
 			},
-			Command::GetPet(command) => {
-				let pet = get_pet_by_name(&client, &command.name)
+			Command::GetPet { name } => {
+				let pet = get_pet_by_name(&client, &name)
 					.await
 					.map_err(|e| eprintln!("Failed to get pet: {e}"))?
-					.ok_or_else(|| eprintln!("No pet found with name: {:?}", command.name))?;
+					.ok_or_else(|| eprintln!("No pet found with name: {name:?}" ))?;
 				println!("{pet:#?}");
 				Ok(())
 			},
-			Command::AddPet(command) => {
-				let count = add_pet(&client, &command.name, &command.species)
+			Command::AddPet { name, species } => {
+				let count = add_pet(&client, &name, &species)
 					.await
 					.map_err(|e| eprintln!("Failed to insert pet: {e}"))?;
 				println!("Inserted {count} rows" );
