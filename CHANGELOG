@@ -1,4 +1,4 @@
-# Unreleased
+# Version 0.1.1 - 2024-03-05
 - [add][minor] Allow query function to return `Result<(), E>`.
 - [add][patch] Add documentation.
 
