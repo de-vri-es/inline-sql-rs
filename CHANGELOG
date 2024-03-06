@@ -1,4 +1,4 @@
-# Unreleased
+# Version 0.1.3 - 2024-03-06
 - [fix][minor] Combine consecutive punctuation tokens in queries into a single string without space between the punctuation.
 
 # Version 0.1.2 - 2024-03-05
