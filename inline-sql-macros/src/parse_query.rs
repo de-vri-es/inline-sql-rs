@@ -1,6 +1,6 @@
 use proc_macro2::{TokenStream, TokenTree, Delimiter, Group, Span, Ident};
 
-type TokenTreeIterator = <TokenStream as IntoIterator>::IntoIter;
+type TokenTreeIterator = std::iter::Peekable<<TokenStream as IntoIterator>::IntoIter>;
 
 pub struct Query {
 	pub query: String,
@@ -38,7 +38,7 @@ struct QueryParser {
 impl QueryParser {
 	fn new(tokens: TokenStream) -> Self {
 		Self {
-			stack: vec![(tokens.into_iter(), None)],
+			stack: vec![(tokens.into_iter().peekable(), None)],
 			placeholders: Vec::new(),
 		}
 	}
@@ -70,7 +70,7 @@ impl QueryParser {
 
 		match tree {
 			TokenTree::Group(group) => {
-				self.stack.push((group.stream().into_iter(), Some(group.clone())));
+				self.stack.push((group.stream().into_iter().peekable(), Some(group.clone())));
 				Ok(Some(Event::GroupOpen(group)))
 			},
 			TokenTree::Ident(ident) => {
@@ -83,7 +83,12 @@ impl QueryParser {
 					let pos = self.map_placeholder(ident);
 					Ok(Some(Event::Placeholder(pos)))
 				} else {
-					Ok(Some(Event::Literal(punct.to_string())))
+					let mut data = punct.to_string();
+					while let Some(TokenTree::Punct(punct)) = tokens.peek() {
+						data.push(punct.as_char());
+						tokens.next();
+					}
+					Ok(Some(Event::Literal(data)))
 				}
 			},
 			TokenTree::Literal(literal) => {
