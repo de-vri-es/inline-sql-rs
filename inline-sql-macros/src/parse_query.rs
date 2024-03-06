@@ -85,6 +85,9 @@ impl QueryParser {
 				} else {
 					let mut data = punct.to_string();
 					while let Some(TokenTree::Punct(punct)) = tokens.peek() {
+						if punct.as_char() == '#' {
+							break;
+						}
 						data.push(punct.as_char());
 						tokens.next();
 					}
