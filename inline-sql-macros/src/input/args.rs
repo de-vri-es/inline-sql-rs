@@ -2,6 +2,7 @@ use proc_macro2::{TokenStream, TokenTree, Ident, Span};
 
 #[derive(Default)]
 pub struct Arguments {
+	pub client: Option<syn::Expr>,
 	pub map_row: Option<syn::Expr>,
 	pub map_err: Option<syn::Expr>,
 }
@@ -13,12 +14,14 @@ impl Arguments {
 
 	pub fn parse_params(&mut self, errors: &mut Vec<syn::Error>, tokens: TokenStream, backup_error_span: Option<Span>) {
 		for arg in split_args(errors, tokens, backup_error_span) {
-			if arg.ident == "map_row" {
+			if arg.ident == "client" {
+				set_once(&mut self.client, arg, errors);
+			} else if arg.ident == "map_row" {
 				set_once(&mut self.map_row, arg, errors);
 			} else if arg.ident == "map_err" {
 				set_once(&mut self.map_err, arg, errors);
 			} else {
-				errors.push(syn::Error::new_spanned(&arg.ident, "#[inline_sql]: unrecognized argument, expected one of `map_row` or `map_err`"));
+				errors.push(syn::Error::new_spanned(&arg.ident, "#[inline_sql]: unrecognized argument, expected one of `client`, `map_row` or `map_err`"));
 			}
 		}
 	}
