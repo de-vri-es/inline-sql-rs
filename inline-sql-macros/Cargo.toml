@@ -1,7 +1,7 @@
 [package]
 name = "inline-sql-macros"
 description = "procedural macros for inline-sql"
-version = "0.1.4"
+version = "0.2.0"
 license = "BSD-2-Clause"
 repository = "https://github.com/de-vri-es/inline-sql-rs"
 

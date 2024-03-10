@@ -1,4 +1,4 @@
-# Unreleased
+# Version 0.2.0 - 2024-03-10
 - [change][major] Use `$` for placeholders instead of `#`.
 - [add][minor] Add support for custom row/error converion functions.
 - [change][patch] Improve span for errors when a type does not implement `ToSql`.
