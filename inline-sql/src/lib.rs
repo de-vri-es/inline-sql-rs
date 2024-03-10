@@ -4,26 +4,9 @@
 //! You can use the function parameters as placeholders in your query,
 //! and the query result will automatically be converted to the return type.
 //!
-//! See the documentation of the [`#[inline_sql]`][`inline_sql`] macro for more details.
+//! See the documentation of the [`#[inline_sql]`][`inline_sql`] macro for more details and examples.
 //!
 //! Currently, only [`tokio-postgres`][`tokio_postgres`] is supported as backend.
-//!
-//! # Example: Ignore the query output.
-//! ```
-//! use inline_sql::inline_sql;
-//!
-//! #[inline_sql]
-//! async fn create_pets_table(
-//!   client: &tokio_postgres::Client
-//! ) -> Result<(), tokio_postgres::Error> {
-//!   query! {
-//!     CREATE TABLE pets (
-//!       name TEXT PRIMARY KEY,
-//!       species TEXT NOT NULL
-//!     )
-//!   }
-//! }
-//! ```
 //!
 //! # Example: Return a [`Vec`] of rows.
 //! ```
@@ -40,43 +23,6 @@
 //!   species: &str,
 //! ) -> Result<Vec<Pet>, tokio_postgres::Error> {
 //!     query!(SELECT * FROM pets WHERE species = $species)
-//! }
-//! ```
-//!
-//! # Example: Return an [`Option`].
-//! ```
-//! # #[derive(pg_mapper::TryFromRow)]
-//! # struct Pet {
-//! #   name: String,
-//! #   species: String,
-//! # }
-//! use inline_sql::inline_sql;
-//!
-//! #[inline_sql]
-//! async fn get_pet_by_name(
-//!   client: &tokio_postgres::Client,
-//!   name: &str,
-//! ) -> Result<Option<Pet>, tokio_postgres::Error> {
-//!     query!(SELECT * FROM pets WHERE name = $name)
-//! }
-//! ```
-//!
-//! # Example: Return the number of affected rows.
-//! ```
-//! # #[derive(pg_mapper::TryFromRow)]
-//! # struct Pet {
-//! #   name: String,
-//! #   species: String,
-//! # }
-//! use inline_sql::inline_sql;
-//!
-//! #[inline_sql]
-//! async fn rename_species(
-//!   client: &tokio_postgres::Client,
-//!   old_species: &str,
-//!   new_species: &str,
-//! ) -> Result<u64, tokio_postgres::Error> {
-//!     query!(UPDATE pets SET species = $new_species WHERE species = $old_species)
 //! }
 //! ```
 //!
@@ -114,6 +60,28 @@
 ///
 /// You can generally not use a type alias in the return type of the function.
 /// The proc macro can not resolve the alias, and will not know which variant to generate.
+///
+/// # Macro arguments
+///
+/// The attribute macro also accepts a arguments.
+/// Multiple arguments may be specified separated by a comma.
+///
+/// ## `#[inline_sql(map_row = ...)]`
+/// The `map_row` argument specifies the function that will be called on a row to convert it to the desired type.
+/// This function signature must be `Fn(tokio_postgres::Row) -> Result<T, E>`.
+///
+/// You can specify the name of a function or a lambda.
+///
+/// Defaults to the equivalent of `|row| TryFrom::try_from(row)?` if not specified.
+///
+/// ## `#[inline_sql(map_err = ...)]`
+/// The `map_err` argument specifies the function that will be called to convert the SQL error to the user error type.
+/// This function signature must be `FnOnce(tokio_postgres::Error) -> E`.
+///
+/// You can specify the name of a function or a lambda.
+///
+/// Defaults to `TryFrom::try_from` if not specified.
+///
 /// # Example 1: Ignore the query output.
 /// ```
 /// use inline_sql::inline_sql;
@@ -194,5 +162,12 @@ pub use inline_sql_macros::inline_sql;
 pub mod macro_export__ {
 	pub mod prelude {
 		pub use futures::StreamExt;
+	}
+
+	pub fn convert_row<F, T, E>(fun: F, row: tokio_postgres::Row) -> Result<T, E>
+	where
+		F: Fn(tokio_postgres::Row) -> Result<T, E>
+	{
+		(fun)(row)
 	}
 }

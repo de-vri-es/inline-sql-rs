@@ -2,6 +2,13 @@ use proc_macro2::{TokenStream, TokenTree, Delimiter, Group, Span, Ident};
 
 type TokenTreeIterator = std::iter::Peekable<<TokenStream as IntoIterator>::IntoIter>;
 
+pub struct QueryMacro {
+	pub keyword: keywords::query,
+	pub exclamation: syn::token::Not,
+	pub delimiter: syn::MacroDelimiter,
+	pub query: Query,
+}
+
 pub struct Query {
 	pub query: String,
 	pub placeholders: Vec<Ident>,
@@ -28,6 +35,44 @@ impl Query {
 			placeholders: parser.placeholders,
 		})
 	}
+}
+
+mod keywords {
+	syn::custom_keyword!(query);
+}
+
+impl syn::parse::Parse for QueryMacro {
+	fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+		let keyword: keywords::query = input.parse()?;
+		let exclamation: syn::token::Not = input.parse()?;
+		let (delimiter, tokens) = parse_delimiter(input)?;
+		let query = Query::from_tokens(tokens)?;
+		Ok(Self {
+			keyword,
+			exclamation,
+			delimiter,
+			query,
+		})
+	}
+}
+
+fn parse_delimiter(input: syn::parse::ParseStream) -> Result<(syn::MacroDelimiter, TokenStream), syn::Error> {
+	input.step(|cursor| {
+		if let Some((TokenTree::Group(g), rest)) = cursor.token_tree() {
+			let span = g.delim_span();
+			let delimiter = match g.delimiter() {
+				Delimiter::Parenthesis => syn::MacroDelimiter::Paren(syn::token::Paren(span)),
+				Delimiter::Brace => syn::MacroDelimiter::Brace(syn::token::Brace(span)),
+				Delimiter::Bracket => syn::MacroDelimiter::Bracket(syn::token::Bracket(span)),
+				Delimiter::None => {
+					return Err(cursor.error("expected delimiter"));
+				}
+			};
+			Ok(((delimiter, g.stream()), rest))
+		} else {
+			Err(cursor.error("expected delimiter"))
+		}
+	})
 }
 
 struct QueryParser {
