@@ -2,6 +2,7 @@
 - [change][major] Use `$` for placeholders instead of `#`.
 - [add][minor] Add support for custom row/error converion functions.
 - [change][patch] Improve span for errors when a type does not implement `ToSql`.
+- [change][patch] Improve error messages when `client` is not defined.
 
 # Version 0.1.4 - 2024-03-06
 - [fix][minor] Do not combine `#` with preceeding punctuation.
