@@ -79,7 +79,7 @@ impl QueryParser {
 			TokenTree::Punct(punct) => {
 				if punct.as_char() == '$' {
 					let ident = take_placeholder(tokens)
-						.ok_or_else(|| syn::Error::new(punct.span(), "#[inline_sql]: expected placeholder name"))?;
+						.map_err(|span| syn::Error::new(span.unwrap_or(punct.span()), "#[inline_sql]: expected placeholder name"))?;
 					let pos = self.map_placeholder(ident);
 					Ok(Some(Event::Placeholder(pos)))
 				} else {
@@ -113,10 +113,11 @@ impl QueryParser {
 	}
 }
 
-fn take_placeholder(tokens: &mut TokenTreeIterator) -> Option<Ident> {
-	match tokens.next()? {
-		TokenTree::Ident(ident) => Some(ident),
-		_other => None,
+fn take_placeholder(tokens: &mut TokenTreeIterator) -> Result<Ident, Option<Span>> {
+	match tokens.next() {
+		Some(TokenTree::Ident(ident)) => Ok(ident),
+		None => Err(None),
+		Some(other) => Err(Some(other.span())),
 	}
 }
 
