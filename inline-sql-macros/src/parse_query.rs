@@ -77,7 +77,7 @@ impl QueryParser {
 				Ok(Some(Event::Literal(ident.to_string())))
 			},
 			TokenTree::Punct(punct) => {
-				if punct.as_char() == '#' {
+				if punct.as_char() == '$' {
 					let ident = take_placeholder(tokens)
 						.ok_or_else(|| syn::Error::new(punct.span(), "#[inline_sql]: expected placeholder name"))?;
 					let pos = self.map_placeholder(ident);
@@ -85,7 +85,7 @@ impl QueryParser {
 				} else {
 					let mut data = punct.to_string();
 					while let Some(TokenTree::Punct(punct)) = tokens.peek() {
-						if punct.as_char() == '#' {
+						if punct.as_char() == '$' {
 							break;
 						}
 						data.push(punct.as_char());

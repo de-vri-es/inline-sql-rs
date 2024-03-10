@@ -39,7 +39,7 @@
 //!   client: &tokio_postgres::Client,
 //!   species: &str,
 //! ) -> Result<Vec<Pet>, tokio_postgres::Error> {
-//!     query!(SELECT * FROM pets WHERE species = #species)
+//!     query!(SELECT * FROM pets WHERE species = $species)
 //! }
 //! ```
 //!
@@ -57,7 +57,7 @@
 //!   client: &tokio_postgres::Client,
 //!   name: &str,
 //! ) -> Result<Option<Pet>, tokio_postgres::Error> {
-//!     query!(SELECT * FROM pets WHERE name = #name)
+//!     query!(SELECT * FROM pets WHERE name = $name)
 //! }
 //! ```
 //!
@@ -76,7 +76,7 @@
 //!   old_species: &str,
 //!   new_species: &str,
 //! ) -> Result<u64, tokio_postgres::Error> {
-//!     query!(UPDATE pets SET species = #new_species WHERE species = #old_species)
+//!     query!(UPDATE pets SET species = $new_species WHERE species = $old_species)
 //! }
 //! ```
 //!
