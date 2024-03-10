@@ -66,21 +66,25 @@
 /// The attribute macro also accepts a arguments.
 /// Multiple arguments may be specified separated by a comma.
 ///
-/// ## `#[inline_sql(map_row = ...)]`
-/// The `map_row` argument specifies the function that will be called on a row to convert it to the desired type.
-/// This function signature must be `Fn(tokio_postgres::Row) -> Result<T, E>`.
 ///
-/// You can specify the name of a function or a lambda.
+/// ##### `#[inline_sql(client = ...)]`
 ///
-/// Defaults to the equivalent of `|row| TryFrom::try_from(row)?` if not specified.
+/// Specify the SQL client object to use.
+/// The argument value must be an expression that gives a [`tokio_postgres::Client`], preferably by reference.
 ///
-/// ## `#[inline_sql(map_err = ...)]`
-/// The `map_err` argument specifies the function that will be called to convert the SQL error to the user error type.
-/// This function signature must be `FnOnce(tokio_postgres::Error) -> E`.
+/// #### `#[inline_sql(map_row = ...)]`
 ///
-/// You can specify the name of a function or a lambda.
+/// Specify a custom function to convert a row from the query result to the return value.
+/// The argument value must be an expression that gives a function with the signature `Fn(`[`tokio_postgres::Row`]`) -> Result<T, E>`.
 ///
-/// Defaults to `TryFrom::try_from` if not specified.
+/// You can specify the name of a function or a closure.
+///
+/// #### `#[inline_sql(map_err = ...)]`
+///
+/// Specify a custom function to convert the SQL error to the error from the function return type.
+/// The argument value must be an expression that gives a function with the signature `Fn(`[`tokio_postgres::Error`]`) -> E`.
+///
+/// You can specify the name of a function or a closure.
 ///
 /// # Example 1: Ignore the query output.
 /// ```

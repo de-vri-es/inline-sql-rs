@@ -14,6 +14,12 @@ pub fn expand_sql_function(errors: &mut Vec<syn::Error>, function: SqlFunction, 
 		body,
 	} = function;
 
+	let Arguments {
+		client,
+		map_row,
+		map_err,
+	} = args;
+
 	let query = match syn::parse2::<QueryMacro>(body) {
 		Ok(x) => x.query,
 		Err(e) => {
@@ -49,7 +55,9 @@ pub fn expand_sql_function(errors: &mut Vec<syn::Error>, function: SqlFunction, 
 		None
 	};
 
-	let handle_err = match args.map_err {
+	let client = client.unwrap_or_else(|| syn::parse_quote!(client));
+
+	let handle_err = match map_err {
 		Some(map_err) => quote_spanned!(map_err.span() => {
 			result.map_err(#map_err)?
 		}),
@@ -61,7 +69,7 @@ pub fn expand_sql_function(errors: &mut Vec<syn::Error>, function: SqlFunction, 
 			}
 		}),
 	};
-	let map_elem = |typ| match args.map_row {
+	let map_elem = |typ| match map_row {
 		Some(map_elem) => quote_spanned!(map_elem.span() => {
 			let elem = ::inline_sql::macro_export__::convert_row(#map_elem, row);
 			match elem {
@@ -91,13 +99,13 @@ pub fn expand_sql_function(errors: &mut Vec<syn::Error>, function: SqlFunction, 
 	let body = match query_type.unwrap_or(QueryType::Execute) {
 		QueryType::Execute => quote! {
 			let params: &[&(dyn ::tokio_postgres::types::ToSql + ::core::marker::Sync)] = #params;
-			let result: ::core::result::Result<u64, ::tokio_postgres::Error> = client.execute(#query, params)#await_future;
+			let result: ::core::result::Result<u64, ::tokio_postgres::Error> = #client.execute(#query, params)#await_future;
 			let result = #handle_err;
 			Ok(())
 		},
 		QueryType::CountRows => quote! {
 			let params: &[&(dyn ::tokio_postgres::types::ToSql + ::core::marker::Sync)] = #params;
-			let result: ::core::result::Result<u64, ::tokio_postgres::Error> = client.execute(#query, params)#await_future;
+			let result: ::core::result::Result<u64, ::tokio_postgres::Error> = #client.execute(#query, params)#await_future;
 			let result = #handle_err;
 			Ok(result)
 		},
@@ -106,7 +114,7 @@ pub fn expand_sql_function(errors: &mut Vec<syn::Error>, function: SqlFunction, 
 			quote! {
 				let params: &[&(dyn ::tokio_postgres::types::ToSql + ::core::marker::Sync)] = #params;
 				let params = params.iter().map(|x| *x as &dyn ::tokio_postgres::types::ToSql);
-				let result: ::core::result::Result<::tokio_postgres::RowStream, ::tokio_postgres::Error> = client.query_raw(#query, params)#await_future;
+				let result: ::core::result::Result<::tokio_postgres::RowStream, ::tokio_postgres::Error> = #client.query_raw(#query, params)#await_future;
 				let stream: ::tokio_postgres::RowStream = #handle_err;
 				let mut stream = ::core::pin::pin!(stream);
 				let mut output = ::std::vec::Vec::<#elem_type>::new();
@@ -121,14 +129,14 @@ pub fn expand_sql_function(errors: &mut Vec<syn::Error>, function: SqlFunction, 
 		QueryType::Stream => quote! {
 			let params: &[&(dyn ::tokio_postgres::types::ToSql + ::core::marker::Sync)] = #params;
 			let params = params.iter().map(|x| *x as &dyn ::tokio_postgres::types::ToSql);
-			let result: ::core::result::Result<::tokio_postgres::RowStream, ::tokio_postgres::Error> = client.query_raw(#query, params)#await_future;
+			let result: ::core::result::Result<::tokio_postgres::RowStream, ::tokio_postgres::Error> = #client.query_raw(#query, params)#await_future;
 			::core::result::Result::Ok(#handle_err)
 		},
 		QueryType::Optional(elem_type) => {
 			let map_elem = map_elem(elem_type);
 			quote! {
 				let params: &[&(dyn ::tokio_postgres::types::ToSql + ::core::marker::Sync)] = #params;
-				let result: ::core::result::Result<::core::option::Option<::tokio_postgres::Row>, ::tokio_postgres::Error> = client.query_opt(#query, params)#await_future;
+				let result: ::core::result::Result<::core::option::Option<::tokio_postgres::Row>, ::tokio_postgres::Error> = #client.query_opt(#query, params)#await_future;
 				match #handle_err {
 					::core::option::Option::None => ::core::result::Result::Ok(::core::option::Option::None),
 					::core::option::Option::Some(row) => {
@@ -142,7 +150,7 @@ pub fn expand_sql_function(errors: &mut Vec<syn::Error>, function: SqlFunction, 
 			let map_elem = map_elem(elem_type);
 			quote! {
 				let params: &[&(dyn ::tokio_postgres::types::ToSql + ::core::marker::Sync)] = #params;
-				let result: ::core::result::Result<::tokio_postgres::Row, ::tokio_postgres::Error> = client.query_one(#query, params)#await_future;
+				let result: ::core::result::Result<::tokio_postgres::Row, ::tokio_postgres::Error> = #client.query_one(#query, params)#await_future;
 				let row = #handle_err;
 				#map_elem
 			}
