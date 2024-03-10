@@ -27,12 +27,10 @@
 //! ```
 //!
 //! # Planned features:
-//! * Support for more backends, including synchronous backends.
-//! * Parsing the function arguments to determine the name of the `client` object.
 //! * Support for queries that return exactly one row or an error.
-//! * More attribute arguments to allow:
-//!   * Specifying the query type instead of deducing it from the return type.
-//!   * Changing how the `client` is obtained in the generated code (for example, from a member of `self`).
+//! * Specifying the query type and row type as macro arguments instead of deducing it from the return type.
+//! * Parsing the function arguments to determine the name of the `client` object.
+//! * Support for more backends, including synchronous backends.
 
 #![warn(missing_docs)]
 #![warn(clippy::missing_docs_in_private_items)]
