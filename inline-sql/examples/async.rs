@@ -9,7 +9,7 @@ async fn create_table(client: &tokio_postgres::Client) -> Result<(), tokio_postg
 }
 
 #[inline_sql]
-async fn get_pets(client: &tokio_postgres::Client) -> Result<Vec<Pet>, tokio_postgres::Error> {
+async fn get_pets(clientl: &tokio_postgres::Client) -> Result<Vec<Pet>, tokio_postgres::Error> {
 	query!(SELECT * FROM pets)
 }
 
