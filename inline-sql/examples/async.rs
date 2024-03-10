@@ -15,12 +15,12 @@ async fn get_pets(client: &tokio_postgres::Client) -> Result<Vec<Pet>, tokio_pos
 
 #[inline_sql]
 async fn get_pet_by_name(client: &tokio_postgres::Client, name: &str) -> Result<Option<Pet>, tokio_postgres::Error> {
-	query!(SELECT * FROM pets WHERE name = #name)
+	query!(SELECT * FROM pets WHERE name = $name)
 }
 
 #[inline_sql]
 async fn add_pet(client: &tokio_postgres::Client, name: &str, species: &str) -> Result<u64, tokio_postgres::Error> {
-	query!(INSERT INTO pets (name, species) VALUES (#name, #species))
+	query!(INSERT INTO pets (name, species) VALUES ($name, $species))
 }
 
 #[derive(pg_mapper::TryFromRow)]
